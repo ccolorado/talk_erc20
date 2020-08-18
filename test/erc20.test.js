@@ -125,5 +125,49 @@ contract('Escrow Contract ', function (accounts) {
 
     })
 
+    describe('Token transfer', async function () {
+
+      beforeEach(async function () {
+
+        this.mintingBalance =  BigNumber('1000000000000000000')
+
+        await this.CYamToken.methods.mint(this.addr.owner, this.mintingBalance.toFixed()).send({
+          from: this.addr.owner,
+          gas: 6721975
+        }).should.be.fulfilled
+      })
+
+      it.only('send tokens to another address', async function () {
+
+        await this.CYamToken.methods.transfer(this.addr.holder1, this.mintingBalance.dividedBy(2).toFixed()).send({
+          from: this.addr.owner,
+          gas: 6721975
+        }).should.be.fulfilled
+
+        await this.CYamToken.methods.transfer(this.addr.stranger, this.mintingBalance.dividedBy(2).toFixed()).send({
+          from: this.addr.owner,
+          gas: 6721975
+        }).should.be.fulfilled
+
+      })
+
+      it.only('revert transfering tokens above the holder balance', async function () {
+
+        await this.CYamToken.methods.transfer(this.addr.holder1, this.mintingBalance.toFixed()).send({
+          from: this.addr.owner,
+          gas: 6721975
+        }).should.be.fulfilled
+
+        await this.CYamToken.methods.transfer(this.addr.stranger, this.mintingBalance.toFixed()).send({
+          from: this.addr.owner,
+          gas: 6721975
+        }).should.be.rejectedWith(
+          Error,
+          'Returned error: VM Exception while processing transaction: revert ERC20: transfer amount exceeds balance'
+        )
+
+      })
+
+    })
 
 })
