@@ -44,5 +44,8 @@ contract YamLottery is Ownable{
     resolved = true;
   }
 
+  function claim() public {
+    require(resolved, "Lottery is not yet resolved");
+  }
 
 }

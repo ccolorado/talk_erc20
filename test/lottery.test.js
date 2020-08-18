@@ -204,10 +204,11 @@ contract('Lottery Contract ', function (accounts) {
 
       })
 
-      it('not be claimable if the lottery is not resolved', async function () {
+    })
 
-        const _isResolved = await this.CYamLottery.methods.resolved().call()
-        _isResolved.should.be.equal(false)
+    describe.only('Lottery claiming', async function () {
+
+      beforeEach(async function () {
 
         await this.contract.methods.claim().send({
           from: this.addr.holder1,
@@ -229,7 +230,18 @@ contract('Lottery Contract ', function (accounts) {
 
       })
 
-    })
+      it('not be claimable if the lottery is not resolved', async function () {
+
+        const _isResolved = await this.CYamLottery.methods.resolved().call()
+        _isResolved.should.be.equal(false)
+
+        await this.CYamLottery.methods.claim().send({
+          from: this.addr.holder1,
+          gas: 6721975
+        }).should.be.rejectedWith(
+          Error,
+          'Returned error: VM Exception while processing transaction: revert Lottery is not yet resolved'
+        )
 
     // describe.only('Lottery claiming', async function () {
 
