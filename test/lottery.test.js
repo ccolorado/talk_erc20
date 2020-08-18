@@ -47,6 +47,23 @@ contract('Escrow Contract ', function (accounts) {
         YamLotteryContract.abi, this.addr.lottery
       )
 
+      this.initialBalance = BigNumber('1000000000000000000').multipliedBy(100)
+      await this.yamToken.mint(this.addr.owner, this.initialBalance.toFixed());
+      await this.yamToken.mint(this.addr.holder1, this.initialBalance.toFixed());
+      await this.yamToken.mint(this.addr.holder2, this.initialBalance.toFixed());
+      await this.yamToken.mint(this.addr.holder3, this.initialBalance.toFixed());
+
     })
+
+
+    /*
+      * recive a token address
+      * set the claimerCount
+      * not be ready to claim
+      * claimers mut have a balance in the contract
+      * lottery can be claimed until the lottery is declared ready
+      * once the lottery becomes ready, players can claim the price each claimer increases the claim count
+      * declare the winner when the claim count reaches the the claimerCount
+      */
 
 })
