@@ -18,5 +18,11 @@
   "bugs": {
     "url": "https://github.com/ccolorado/talk_erc20/issues"
   },
-  "homepage": "https://github.com/ccolorado/talk_erc20#readme"
+  "homepage": "https://github.com/ccolorado/talk_erc20#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.1.0",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "chai-bignumber": "^3.0.0"
+  }
 }
