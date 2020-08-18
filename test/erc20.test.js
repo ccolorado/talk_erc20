@@ -35,16 +35,31 @@ contract('Escrow Contract ', function (accounts) {
 
     })
 
-    it('has a name', async function () {
-      false.should.be.equal(true)
+    describe.only('token integrity', async function () {
+
+      it('has a name', async function () {
+
+        const _name = await this.CYamToken.methods.name().call()
+        _name.should.be.equal(this.tokenName)
+
+      })
+
+      it('has a symbol', async function () {
+
+        const _symbol = await this.CYamToken.methods.symbol().call()
+        _symbol.should.be.equal(this.tokenSymbol)
+
+      })
+
+      it('has a total supply', async function () {
+
+        const _totalSupply = await this.CYamToken.methods.totalSupply().call()
+        _totalSupply.should.be.equal('0')
+
+      })
+
+
     })
 
-    it('has a symbol', async function () {
-      false.should.be.equal(true)
-    })
-
-    it('has a total supply', async function () {
-      false.should.be.equal(true)
-    })
 
 })
