@@ -32,6 +32,7 @@ contract('Escrow Contract ', function (accounts) {
       }
       this.tokenName = "Yet Another Mintable Token"
       this.tokenSymbol = "YAMT"
+      this.claimingCount = 3
 
       this.yamToken = await YamToken.new(this.tokenName, this.tokenSymbol)
       this.addr.token = this.yamToken.address
@@ -40,7 +41,7 @@ contract('Escrow Contract ', function (accounts) {
         YamTokenContract.abi, this.addr.token
       )
 
-      this.yamLottery= await YamLottery.new()
+      this.yamLottery= await YamLottery.new(this.addr.token, this.claimingCount)
       this.addr.lottery = this.yamLottery.address
 
       this.CYamLottery = await new web3.eth.Contract(
@@ -55,10 +56,28 @@ contract('Escrow Contract ', function (accounts) {
 
     })
 
+    describe.only('lottery integrity', async function () {
+
+      it('recive a token address', async function () {
+
+        const _tokenAddress = await this.CYamLottery.methods.tokenAddress().call()
+        _tokenAddress.should.be.equal(this.addr.token)
+
+      })
+
+      it('store a claiming count', async function () {
+
+        const _claimingCount = await this.CYamLottery.methods.claimingCount().call()
+        _claimingCount.should.be.equal(this.claimingCount)
+
+      })
+
+
+    })
+
+
 
     /*
-      * recive a token address
-      * set the claimerCount
       * not be ready to claim
       * claimers mut have a balance in the contract
       * lottery can be claimed until the lottery is declared ready
