@@ -21,7 +21,8 @@ contract('Escrow Contract ', function (accounts) {
         owner: accounts[0],
         holder1: accounts[1],
         holder2: accounts[2],
-        holder3: accounts[3]
+        holder3: accounts[3],
+        stranger: accounts[4],
       }
       this.tokenName = "Yet Another Mintable Token"
       this.tokenSymbol = "YAMT"
@@ -35,7 +36,7 @@ contract('Escrow Contract ', function (accounts) {
 
     })
 
-    describe.only('token integrity', async function () {
+    describe('token integrity', async function () {
 
       it('has a name', async function () {
 
@@ -58,6 +59,26 @@ contract('Escrow Contract ', function (accounts) {
 
       })
 
+
+    })
+
+    describe.only('Token Minting', async function () {
+
+      beforeEach(async function () {
+
+      })
+
+      it.only('can not be minted by a stranger', async function () {
+
+        await this.CYamToken.methods.mint(this.addr.stranger, 2000000000000000000).send({
+          from: this.addr.stranger,
+          gas: 6721975
+        }).should.be.rejectedWith(
+          Error,
+          'placeHolder'
+        )
+
+      })
 
     })
 
