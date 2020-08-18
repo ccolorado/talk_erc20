@@ -56,7 +56,7 @@ contract('Lottery Contract ', function (accounts) {
 
     })
 
-    describe.only('lottery integrity', async function () {
+    describe('lottery integrity', async function () {
 
       it('recive a token address', async function () {
 
@@ -76,14 +76,15 @@ contract('Lottery Contract ', function (accounts) {
     })
 
 
-    describe.only('players can participate', async function () {
+    describe('players can participate', async function () {
 
       beforeEach(async function () {
 
         this.tokenAmount = '2000000000000000000'
+
       })
 
-      it.only('not increase in contract balance when tokens are transfered', async function () {
+      it('not increase in contract balance when tokens are transfered', async function () {
 
         await this.CYamToken.methods.transfer(this.addr.lottery, this.tokenAmount).send({
           from: this.addr.holder1,
@@ -93,29 +94,83 @@ contract('Lottery Contract ', function (accounts) {
         const _newBalance = await this.CYamLottery.methods.balanceOf(this.addr.holder1).call()
         _newBalance.should.be.equal('0')
 
+        const _contractBalance = await this.CYamToken.methods.balanceOf(this.addr.lottery).call()
+        _contractBalance.should.be.equal(this.tokenAmount)
+
       })
 
       it('increase in contract balance when a tokens are added', async function () {
-        false.should.be.equal(true)
+
+        await this.CYamLottery.methods.addTokens(this.addr.lottery, this.tokenAmount).send({
+          from: this.addr.holder1,
+          gas: 6721975
+        }).should.be.rejectedWith(
+          Error,
+          'Returned error: VM Exception while processing transaction: revert ERC20: transfer amount exceeds allowance'
+        )
+
+        await this.CYamToken.methods.approve(this.addr.lottery, this.tokenAmount).send({
+          from: this.addr.holder1,
+          gas: 6721975
+        }).should.be.fulfilled
+
+        await this.CYamLottery.methods.addTokens(this.addr.holder1, this.tokenAmount).send({
+          from: this.addr.holder1,
+          gas: 6721975
+        }).should.be.fulfilled
+
+
+        const _holderBalance = await this.CYamToken.methods.balanceOf(this.addr.holder1).call()
+        _holderBalance.should.be.equal(this.initialBalance.minus(this.tokenAmount).toFixed())
+
+        const _contractBalance = await this.CYamToken.methods.balanceOf(this.addr.lottery).call()
+        _contractBalance.should.be.equal(this.tokenAmount)
+
+        const _inContractBalance = await this.CYamLottery.methods.balanceOf(this.addr.holder1).call()
+        _inContractBalance.should.be.equal(this.tokenAmount)
+
+      })
+
+      it('can transfer tokens to a player other than the sender', async function () {
+
+        await this.CYamToken.methods.approve(this.addr.lottery, this.tokenAmount).send({
+          from: this.addr.holder1,
+          gas: 6721975
+        }).should.be.fulfilled
+
+        await this.CYamLottery.methods.addTokens(this.addr.holder2, this.tokenAmount).send({
+          from: this.addr.holder1,
+          gas: 6721975
+        }).should.be.fulfilled
+
+        const _contractBalance = await this.CYamToken.methods.balanceOf(this.addr.lottery).call()
+        _contractBalance.should.be.equal(this.tokenAmount)
+
+        const _inContractBalance = await this.CYamLottery.methods.balanceOf(this.addr.holder1).call()
+        _inContractBalance.should.be.equal('0')
+
+        const _beneficiaryBalance = await this.CYamLottery.methods.balanceOf(this.addr.holder2).call()
+        _beneficiaryBalance.should.be.equal(this.tokenAmount)
+
       })
 
 
     })
 
-    describe.skip('Lottery resolution', async function () {
+    describe('Lottery resolution', async function () {
 
       beforeEach(async function () {
 
       })
 
-      it('only onwer can resolve the lottery', async function () {
+      it('onwer exclusively can resolve the lottery', async function () {
 
         await this.CYamLottery.methods.resolveLottery().send({
           from: this.addr.holder1,
           gas: 6721975
         }).should.be.rejectedWith(
           Error,
-          'placeHolder'
+          'Returned error: VM Exception while processing transaction: revert Ownable: caller is not the owner'
         )
 
         await this.CYamLottery.methods.resolveLottery().send({
@@ -125,6 +180,29 @@ contract('Lottery Contract ', function (accounts) {
 
       })
 
+      it('players cant add tokens once the lottery is resolved', async function () {
+
+        this.tokenAmount = '2000000000000000000'
+
+        await this.CYamLottery.methods.resolveLottery().send({
+          from: this.addr.owner,
+          gas: 6721975
+        }).should.be.fulfilled
+
+        await this.CYamToken.methods.approve(this.addr.lottery, this.tokenAmount).send({
+          from: this.addr.holder1,
+          gas: 6721975
+        }).should.be.fulfilled
+
+        await this.CYamLottery.methods.addTokens(this.addr.holder1, this.tokenAmount).send({
+          from: this.addr.holder1,
+          gas: 6721975
+        }).should.be.rejectedWith(
+          Error,
+          'Returned error: VM Exception while processing transaction: revert cannot keep adding tokens once the lottery has been resolved'
+        )
+
+      })
 
       it('not be claimable if the lottery is not resolved', async function () {
 
