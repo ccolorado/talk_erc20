@@ -20,7 +20,7 @@ const YamLotteryContract = require(
   '../build/contracts/YamLottery.json'
 )
 
-contract('Escrow Contract ', function (accounts) {
+contract('Lottery Contract ', function (accounts) {
     beforeEach(async function () {
 
       this.addr = {
@@ -67,7 +67,7 @@ contract('Escrow Contract ', function (accounts) {
 
       it('store a claiming count', async function () {
 
-        const _claimingCount = await this.CYamLottery.methods.claimingCount().call()
+        const _claimingCount = BigNumber(await this.CYamLottery.methods.claimingCount().call()).toNumber()
         _claimingCount.should.be.equal(this.claimingCount)
 
       })
@@ -76,10 +76,93 @@ contract('Escrow Contract ', function (accounts) {
     })
 
 
+    describe.only('players can participate', async function () {
+
+      beforeEach(async function () {
+
+        this.tokenAmount = '2000000000000000000'
+      })
+
+      it.only('not increase in contract balance when tokens are transfered', async function () {
+
+        await this.CYamToken.methods.transfer(this.addr.lottery, this.tokenAmount).send({
+          from: this.addr.holder1,
+          gas: 6721975
+        }).should.be.fulfilled
+
+        const _newBalance = await this.CYamLottery.methods.balanceOf(this.addr.holder1).call()
+        _newBalance.should.be.equal('0')
+
+      })
+
+      it('increase in contract balance when a tokens are added', async function () {
+        false.should.be.equal(true)
+      })
+
+
+    })
+
+    describe.skip('Lottery resolution', async function () {
+
+      beforeEach(async function () {
+
+      })
+
+      it('only onwer can resolve the lottery', async function () {
+
+        await this.CYamLottery.methods.resolveLottery().send({
+          from: this.addr.holder1,
+          gas: 6721975
+        }).should.be.rejectedWith(
+          Error,
+          'placeHolder'
+        )
+
+        await this.CYamLottery.methods.resolveLottery().send({
+          from: this.addr.owner,
+          gas: 6721975
+        }).should.be.fulfilled
+
+      })
+
+
+      it('not be claimable if the lottery is not resolved', async function () {
+
+        const _isResolved = await this.CYamLottery.methods.resolved().call()
+        _isResolved.should.be.equal(false)
+
+        await this.contract.methods.claim().send({
+          from: this.addr.holder1,
+          gas: 6721975
+        }).should.be.rejectedWith(
+          Error,
+          'placeHolder'
+        )
+
+        await this.contract.methods.resolveLottery().send({
+          from: this.addr.owner,
+          gas: 6721975
+        }).should.be.fulfilled
+
+        await this.contract.methods.claim().send({
+          from: this.addr.holder1,
+          gas: 6721975
+        }).should.be.fulfilled
+
+      })
+
+    })
+
+    // describe.only('Lottery claiming', async function () {
+
+    //   beforeEach(async function () {
+
+    //   })
+
+    // })
+
 
     /*
-      * not be ready to claim
-      * claimers mut have a balance in the contract
       * lottery can be claimed until the lottery is declared ready
       * once the lottery becomes ready, players can claim the price each claimer increases the claim count
       * declare the winner when the claim count reaches the the claimerCount

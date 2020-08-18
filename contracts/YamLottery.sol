@@ -6,10 +6,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract YamLottery is Ownable{
 
   address public tokenAddress;
+  uint public claimingCount;
 
-  constructor(address tokenAddress, uint claimerCount)
+  constructor(address _tokenAddress, uint _claimingCount)
     Ownable()
   public {
+    tokenAddress = _tokenAddress;
+    claimingCount = _claimingCount;
   }
 
 
