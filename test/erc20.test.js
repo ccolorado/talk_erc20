@@ -62,20 +62,63 @@ contract('Escrow Contract ', function (accounts) {
 
     })
 
-    describe.only('Token Minting', async function () {
+    describe('Token Minting', async function () {
 
       beforeEach(async function () {
 
+        this.mintingBalance =  BigNumber('1000000000000000000').multipliedBy(100).toFixed()
+
       })
 
-      it.only('can not be minted by a stranger', async function () {
+      it('be mintable by owner', async function () {
 
-        await this.CYamToken.methods.mint(this.addr.stranger, 2000000000000000000).send({
+        await this.CYamToken.methods.mint(this.addr.owner, this.mintingBalance).send({
+          from: this.addr.owner,
+          gas: 6721975
+        }).should.be.fulfilled
+
+      })
+
+      it('increase the balance of the mintedTo account', async function () {
+
+        const _oldBalance = await this.CYamToken.methods.balanceOf(this.addr.owner).call()
+
+        await this.CYamToken.methods.mint(this.addr.owner, this.mintingBalance).send({
+          from: this.addr.owner,
+          gas: 6721975
+        }).should.be.fulfilled
+
+        const _newBalance = await this.CYamToken.methods.balanceOf(this.addr.owner).call()
+
+        _oldBalance.should.be.equal('0')
+        _newBalance.should.be.equal(this.mintingBalance)
+
+      })
+
+      it('emit a transfer event at minting', async function () {
+
+        await this.CYamToken.methods.mint(this.addr.owner, this.mintingBalance).send({
+          from: this.addr.owner,
+          gas: 6721975
+        }).should.be.fulfilled
+
+        const events = await this.CYamToken.getPastEvents('Transfer')
+
+        events.length.should.be.equal(1)
+        events[0].returnValues.from.should.be.equal('0x0000000000000000000000000000000000000000')
+        events[0].returnValues.to.should.be.equal(this.addr.owner)
+        events[0].returnValues.value.should.be.equal(this.mintingBalance)
+
+      })
+
+      it('can not be minted by a stranger', async function () {
+
+        await this.CYamToken.methods.mint(this.addr.stranger, this.mintingBalance).send({
           from: this.addr.stranger,
           gas: 6721975
         }).should.be.rejectedWith(
           Error,
-          'placeHolder'
+          'Returned error: VM Exception while processing transaction: revert Ownable: caller is not the owner'
         )
 
       })
