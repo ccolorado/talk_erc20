@@ -41,8 +41,8 @@ contract('Lottery Contract ', function (accounts) {
         YamTokenContract.abi, this.addr.token
       )
 
-      this.yamLottery= await YamLottery.new(this.addr.token, this.claimingCount)
-      this.addr.lottery = this.yamLottery.address
+      this.YamLottery = await YamLottery.new(this.addr.token, this.claimingCount)
+      this.addr.lottery = this.YamLottery.address
 
       this.CYamLottery = await new web3.eth.Contract(
         YamLotteryContract.abi, this.addr.lottery
@@ -206,24 +206,28 @@ contract('Lottery Contract ', function (accounts) {
 
     })
 
-    describe.only('Lottery claiming', async function () {
+    describe('Lottery claiming', async function () {
 
       beforeEach(async function () {
 
-        await this.contract.methods.claim().send({
-          from: this.addr.holder1,
-          gas: 6721975
-        }).should.be.rejectedWith(
-          Error,
-          'placeHolder'
-        )
+        this.tokenAmount = BigNumber('2000000000000000000')
 
-        await this.contract.methods.resolveLottery().send({
-          from: this.addr.owner,
+        await this.CYamToken.methods.approve(this.addr.lottery, this.tokenAmount.multipliedBy(3).toFixed()).send({
+          from: this.addr.holder1,
           gas: 6721975
         }).should.be.fulfilled
 
-        await this.contract.methods.claim().send({
+        await this.CYamLottery.methods.addTokens(this.addr.holder1, this.tokenAmount.toFixed()).send({
+          from: this.addr.holder1,
+          gas: 6721975
+        }).should.be.fulfilled
+
+        await this.CYamLottery.methods.addTokens(this.addr.holder2, this.tokenAmount.toFixed()).send({
+          from: this.addr.holder1,
+          gas: 6721975
+        }).should.be.fulfilled
+
+        await this.CYamLottery.methods.addTokens(this.addr.holder3, this.tokenAmount.toFixed()).send({
           from: this.addr.holder1,
           gas: 6721975
         }).should.be.fulfilled
@@ -243,19 +247,76 @@ contract('Lottery Contract ', function (accounts) {
           'Returned error: VM Exception while processing transaction: revert Lottery is not yet resolved'
         )
 
-    // describe.only('Lottery claiming', async function () {
+      })
 
-    //   beforeEach(async function () {
+      it('can only be claimed by a participant', async function () {
 
-    //   })
+        await this.CYamLottery.methods.resolveLottery().send({
+          from: this.addr.owner,
+          gas: 6721975
+        }).should.be.fulfilled
 
-    // })
+        await this.CYamLottery.methods.claim().send({
+          from: this.addr.stranger,
+          gas: 6721975
+        }).should.be.rejectedWith(
+          Error,
+          'Returned error: VM Exception while processing transaction: revert Claimer is not participating in the lottery'
+        )
 
+      })
 
-    /*
-      * lottery can be claimed until the lottery is declared ready
-      * once the lottery becomes ready, players can claim the price each claimer increases the claim count
-      * declare the winner when the claim count reaches the the claimerCount
-      */
+      it('players can claim a resolved lottery when it reaches the claimingCount', async function () {
+
+        await this.CYamLottery.methods.resolveLottery().send({ from: this.addr.owner, gas: 6721975 }).should.be.fulfilled
+
+        await this.CYamLottery.methods.claim().send({ from: this.addr.holder1 }).should.be.fulfilled
+        await this.CYamLottery.methods.claim().send({ from: this.addr.holder2 }).should.be.fulfilled
+        await this.CYamLottery.methods.claim().send({ from: this.addr.holder3 }).should.be.fulfilled
+
+        await this.CYamLottery.methods.claim().send({
+          from: this.addr.holder2,
+          gas: 6721975
+        }).should.be.rejectedWith(
+          Error,
+          'Returned error: VM Exception while processing transaction: revert Lottery has already been claimed'
+        )
+
+      })
+
+      it('should emit an event every time a claiming is attempted until the winner is found', async function () {
+        startTimeBlock = await web3.eth.getBlock('latest')
+
+        await this.CYamLottery.methods.resolveLottery().send({ from: this.addr.owner, gas: 6721975 }).should.be.fulfilled
+
+        await this.CYamLottery.methods.claim().send({ from: this.addr.holder1 }).should.be.fulfilled
+        await this.CYamLottery.methods.claim().send({ from: this.addr.holder2 }).should.be.fulfilled
+        await this.CYamLottery.methods.claim().send({ from: this.addr.holder3 }).should.be.fulfilled
+
+        const eventsEmited = await this.YamLottery.getPastEvents('LotteryClaimed')
+
+        eventsEmited.length.should.be.equal(1)
+        eventsEmited[0].returnValues.player.should.be.equal(this.addr.holder3)
+        eventsEmited[0].returnValues.totalBag.should.be.equal(this.tokenAmount.multipliedBy(3).toFixed())
+
+      })
+
+      it('should emit an event every time a claiming is attempted until the winner is found', async function () {
+        startTimeBlock = await web3.eth.getBlock('latest')
+
+        const _winnerOldBalance = BigNumber(await this.CYamToken.methods.balanceOf(this.addr.holder3).call())
+
+        await this.CYamLottery.methods.resolveLottery().send({ from: this.addr.owner, gas: 6721975 }).should.be.fulfilled
+
+        await this.CYamLottery.methods.claim().send({ from: this.addr.holder1 }).should.be.fulfilled
+        await this.CYamLottery.methods.claim().send({ from: this.addr.holder2 }).should.be.fulfilled
+        await this.CYamLottery.methods.claim().send({ from: this.addr.holder3 }).should.be.fulfilled
+
+        const _winnerNewBalance = BigNumber( await this.CYamToken.methods.balanceOf(this.addr.holder3).call() )
+
+        _winnerNewBalance.toFixed().should.be.equal(_winnerOldBalance.plus(this.tokenAmount.multipliedBy(3)).toFixed())
+
+      })
+    })
 
 })

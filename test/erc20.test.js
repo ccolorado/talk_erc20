@@ -137,7 +137,7 @@ contract('Escrow Contract ', function (accounts) {
         }).should.be.fulfilled
       })
 
-      it.only('send tokens to another address', async function () {
+      it('send tokens to another address', async function () {
 
         await this.CYamToken.methods.transfer(this.addr.holder1, this.mintingBalance.dividedBy(2).toFixed()).send({
           from: this.addr.owner,
@@ -151,7 +151,7 @@ contract('Escrow Contract ', function (accounts) {
 
       })
 
-      it.only('revert transfering tokens above the holder balance', async function () {
+      it('revert transfering tokens above the holder balance', async function () {
 
         await this.CYamToken.methods.transfer(this.addr.holder1, this.mintingBalance.toFixed()).send({
           from: this.addr.owner,
